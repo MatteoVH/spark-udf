@@ -63,7 +63,12 @@ private[sql] class DiskPartition (
    * @param row the [[Row]] we are adding
    */
   def insert(row: Row) = {
-    // IMPLEMENT ME
+    data.add(row)
+
+    val bytes: Array[byte] = getBytesFromList(data)
+
+    if (bytes.size > blockSize)
+      spillPartitionToDisk()
   }
 
   /**
