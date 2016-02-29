@@ -141,7 +141,11 @@ private[sql] class DiskPartition (
    * also be closed.
    */
   def closeInput() = {
-    // IMPLEMENT ME
+    // IMPLEMENT ME -  done? idk
+		if (!writtenToDisk) {
+		  spillPartitionToDisk();
+		}
+		outStream.close();
     inputClosed = true
   }
 
