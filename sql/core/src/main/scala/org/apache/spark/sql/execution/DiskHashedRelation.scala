@@ -65,9 +65,7 @@ private[sql] class DiskPartition (
   def insert(row: Row) = {
     data.add(row)
 
-    val bytes: Array[byte] = getBytesFromList(data)
-
-    if (bytes.size > blockSize)
+    if (measurePartitionSize() > blockSize)
       spillPartitionToDisk()
   }
 
@@ -115,7 +113,7 @@ private[sql] class DiskPartition (
       }
 
       override def hasNext() = {
-        currentIterator.hasNext()
+        currentIterator.hasNext
       }
 
       /**
