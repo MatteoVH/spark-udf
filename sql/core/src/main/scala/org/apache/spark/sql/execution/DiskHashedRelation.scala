@@ -127,6 +127,10 @@ private[sql] class DiskPartition (
        */
       private[this] def fetchNextChunk(): Boolean = {
         // IMPLEMENT ME
+        if (this.hasNext()) {
+          this.next()
+          true
+        }
         false
       }
     }
@@ -142,9 +146,9 @@ private[sql] class DiskPartition (
   def closeInput() = {
     // IMPLEMENT ME -  done? idk
 		if (!writtenToDisk) {
-		  spillPartitionToDisk();
+		  spillPartitionToDisk()
 		}
-		outStream.close();
+		outStream.close()
     inputClosed = true
   }
 
