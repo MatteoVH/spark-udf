@@ -36,6 +36,7 @@ protected [sql] final class GeneralDiskHashedRelation(partitions: Array[DiskPart
     extends DiskHashedRelation with Serializable {
 
   override def getIterator() = {
+	this.closeAllPartitions()
 	new Iterator[DiskPartition] {
 		var index: Int = 0
 
