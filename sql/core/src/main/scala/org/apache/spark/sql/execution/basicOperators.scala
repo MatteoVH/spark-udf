@@ -125,7 +125,6 @@ case class PartitionProject(projectList: Seq[Expression], child: SparkPlan) exte
        * @return
        */
       private def fetchNextPartition(): Boolean  = {
-		
 		if (diskIterator.hasNext) {
 			partition = diskIterator.next()
 		    partitionIterator = partition.getData()
