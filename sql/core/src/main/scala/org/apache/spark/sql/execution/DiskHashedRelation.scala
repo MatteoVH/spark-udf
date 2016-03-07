@@ -202,7 +202,7 @@ private[sql] object DiskHashedRelation {
 	while(input.hasNext) {
 		var row: Row = input.next()
 		
-		var partitionToInsertIndex: Int = input.hashCode % size
+		var partitionToInsertIndex: Int = input.hashCode() % size
 
 		diskPartitions(partitionToInsertIndex).insert(row)
 	}
