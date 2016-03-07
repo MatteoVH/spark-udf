@@ -196,7 +196,7 @@ private[sql] object DiskHashedRelation {
                 keyGenerator: Projection,
                 size: Int = 64,
                 blockSize: Int = 64000) = {
-	//val diskPartitions: Array[DiskPartition] = (0 to size - 1).map((i: Int) => new DiskPartition(i.toString, i))
+
 	val diskPartitions: Array[DiskPartition] = ((0 until size).map(i => new DiskPartition(i.toString, i))).toArray
 
 	while(input.hasNext) {
