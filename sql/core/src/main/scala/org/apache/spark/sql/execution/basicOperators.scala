@@ -102,13 +102,13 @@ case class PartitionProject(projectList: Seq[Expression], child: SparkPlan) exte
 
     new Iterator[Row] {
       def hasNext() = {
-        // IMPLEMENT ME
-        false
+        // IMPLEMENT ME - ?
+        input.hasNext
       }
 
       def next() = {
-        // IMPLEMENT ME
-        null
+        // IMPLEMENT ME - ?
+        input.next()
       }
 
       /**
@@ -119,6 +119,10 @@ case class PartitionProject(projectList: Seq[Expression], child: SparkPlan) exte
        */
       private def fetchNextPartition(): Boolean  = {
         // IMPLEMENT ME
+        if (this.hasNext()) {
+          this.next()
+          true
+        }
         false
       }
     }
