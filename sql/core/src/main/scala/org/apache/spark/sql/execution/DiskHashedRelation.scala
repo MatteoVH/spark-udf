@@ -185,7 +185,17 @@ private[sql] object DiskHashedRelation {
                 keyGenerator: Projection,
                 size: Int = 64,
                 blockSize: Int = 64000) = {
-    // IMPLEMENT ME
-    null
+	//val diskPartitions: Array[DiskPartition] = (0 to size - 1).map((i: Int) => new DiskPartition(i.toString, i))
+	val diskPartitions: Array[DiskPartition] = ((0 until size).map(i => new DiskPartition(i.toString, i))).toArray
+
+	while(input.hasNext) {
+		var row: Row = input.next()
+		
+		var partitionToInsertIndex: Int = input.hashCode % size
+
+		diskPartitions(partitionToInsertIndex).insert(row)
+	}
+
+	new GeneralDiskHashedRelation(diskPartitions)
   }
 }
