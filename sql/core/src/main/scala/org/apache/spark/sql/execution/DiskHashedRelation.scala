@@ -36,19 +36,8 @@ protected [sql] final class GeneralDiskHashedRelation(partitions: Array[DiskPart
     extends DiskHashedRelation with Serializable {
 
   override def getIterator() = {
-	this.closeAllPartitions()
-	new Iterator[DiskPartition] {
-		var index: Int = 0
-
-		override def next() = {
-			index = index + 1
-			partitions(index - 1)
-		}
-
-		override def hasNext() = {
-			index + 1 != partitions.length
-		}
-	}
+	closeAllPartitions()
+	partitions.iterator
   }
 
   override def closeAllPartitions() = {
@@ -126,18 +115,17 @@ private[sql] class DiskPartition (
 			currentIterator.next()
 		else {
 			fetchNextChunk()
-			if (currentIterator.hasNext)
-				currentIterator.next()
-			else
-				null
+			currentIterator.next()
 		}
       }
 
       override def hasNext() = {
         if (currentIterator.hasNext)
 			true
-		else
+		else {
 			fetchNextChunk()
+			currentIterator.hasNext
+		}
       }
 
       /**
@@ -154,7 +142,7 @@ private[sql] class DiskPartition (
 		  byteArray = new Array[Byte](chunkSize);
 		  inStream.read(byteArray, 0, chunkSize)
 		
-		  val list: JavaArrayList[Row] = CS143Utils.getListFromBytes(byteArray)
+		  var list: JavaArrayList[Row] = CS143Utils.getListFromBytes(byteArray)
 		  currentIterator = list.iterator.asScala
 		  true
         } else
@@ -217,7 +205,7 @@ private[sql] object DiskHashedRelation {
 	while(input.hasNext) {
 		var row: Row = input.next()
 		
-		var partitionToInsertIndex: Int = input.hashCode() % size
+		var partitionToInsertIndex: Int = row.hashCode() % size
 
 		diskPartitions(partitionToInsertIndex).insert(row)
 	}
