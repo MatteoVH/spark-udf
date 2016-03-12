@@ -67,9 +67,11 @@ private[sql] class DiskPartition (
       throw new SparkException("Should not allow inputs to file after input is closed!")
 
     data.add(row)
-
-    if (measurePartitionSize() > blockSize)
+		writtenToDisk = false
+    if (measurePartitionSize() > blockSize) {
       spillPartitionToDisk()
+			data.clear()
+		}
   }
 
   /**
@@ -139,7 +141,7 @@ private[sql] class DiskPartition (
 		  val chunkSize: Int = chunkSizeIterator.next()
 
 		  //clear byte array
-		  byteArray = new Array[Byte](chunkSize);
+		  byteArray = new Array[Byte](chunkSize)
 		  inStream.read(byteArray, 0, chunkSize)
 		
 		  var list: JavaArrayList[Row] = CS143Utils.getListFromBytes(byteArray)

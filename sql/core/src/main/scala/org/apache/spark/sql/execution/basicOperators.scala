@@ -98,37 +98,31 @@ case class PartitionProject(projectList: Seq[Expression], child: SparkPlan) exte
     // This is the key generator for the course-grained external hashing.
     val keyGenerator = CS143Utils.getNewProjection(projectList, child.output)
 
-    val diskHashRelation: DiskHashedRelation = DiskHashedRelation(input, keyGenerator)
-    val cacheIterator: (Iterator[Row] => Iterator[Row]) = CS143Utils.generateCachingIterator(projectList, output)
-
-
-
     new Iterator[Row] {
-	  val diskIterator: Iterator[DiskPartition] = diskHashRelation.getIterator()
-	  var partition: DiskPartition = diskIterator.next()
-	  var partitionIterator: Iterator[Row] = partition.getData()
+			var partitionIterator: Iterator[Row] = null
+	  	val diskIterator = DiskHashedRelation(input, keyGenerator).getIterator()
+      var partition: DiskPartition = null
+			var cacheIterator: (Iterator[Row] => Iterator[Row]) = null
 
       def hasNext() = {
-		  if (partitionIterator.hasNext)
-			true
-		  else
-			if (this.fetchNextPartition())
-				partitionIterator.hasNext
-			else
-				false
+		  	if (partitionIterator != null) {
+          if (partitionIterator.hasNext) {
+            true
+          } else {
+            fetchNextPartition()
+          }
+        } else {
+					fetchNextPartition()
+        }
       }
 
       def next() = {
-		  if (partitionIterator.hasNext)
-			  partitionIterator.next()
-		  else {
-			if (this.fetchNextPartition()) {
-				if (partitionIterator.hasNext)
-					partitionIterator.next
+		  	if (hasNext) {
+          partitionIterator.next()
+        } else {
+          null
+        }
 			}
-			null
-		}
-      }
 
       /**
        * This fetches the next partition over which we will iterate or returns false if there are no more partitions
@@ -137,12 +131,16 @@ case class PartitionProject(projectList: Seq[Expression], child: SparkPlan) exte
        * @return
        */
       private def fetchNextPartition(): Boolean  = {
-		if (diskIterator.hasNext) {
-			partition = diskIterator.next()
-		    partitionIterator = cacheIterator(partition.getData())
-			partitionIterator.hasNext
-		} else
-			false
+				var whileExit: Boolean = false
+				while (diskIterator.hasNext && !whileExit) {
+          partition = diskIterator.next()
+          cacheIterator = CS143Utils.generateCachingIterator(projectList, child.output)
+          partitionIterator = cacheIterator(partition.getData())
+          if (partitionIterator.hasNext) {
+            whileExit = true
+          }
+        }
+				whileExit
       }
     }
   }
