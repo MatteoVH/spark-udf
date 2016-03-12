@@ -113,9 +113,8 @@ private[sql] class DiskPartition (
    * @return the [[Iterator]] of the data
    */
   def getData(): Iterator[Row] = {
-    if (!inputClosed) {
+    if (!inputClosed)
       throw new SparkException("Should not be reading from file before closing input. Bad things will happen!")
-    }
 
     new Iterator[Row] {
       var currentIterator: Iterator[Row] = data.iterator.asScala
@@ -123,11 +122,22 @@ private[sql] class DiskPartition (
       var byteArray: Array[Byte] = null
 
       override def next() = {
-        currentIterator.next()
+		if (currentIterator.hasNext)
+			currentIterator.next()
+		else {
+			fetchNextChunk()
+			if (currentIterator.hasNext)
+				currentIterator.next()
+			else
+				null
+		}
       }
 
       override def hasNext() = {
-        currentIterator.hasNext
+        if (currentIterator.hasNext)
+			true
+		else
+			fetchNextChunk()
       }
 
       /**
@@ -137,12 +147,18 @@ private[sql] class DiskPartition (
        * @return true unless the iterator is empty.
        */
       private[this] def fetchNextChunk(): Boolean = {
-        // IMPLEMENT ME
-        if (this.hasNext()) {
-          this.next()
-          true
-        }
-        false
+        if (chunkSizeIterator.hasNext) {
+		  val chunkSize: Int = chunkSizeIterator.next()
+
+		  //clear byte array
+		  byteArray = new Array[Byte](chunkSize);
+		  inStream.read(byteArray, 0, chunkSize)
+		
+		  val list: JavaArrayList[Row] = CS143Utils.getListFromBytes(byteArray)
+		  currentIterator = list.iterator.asScala
+		  true
+        } else
+		  false
       }
     }
   }
@@ -155,11 +171,10 @@ private[sql] class DiskPartition (
    * also be closed.
    */
   def closeInput() = {
-    // IMPLEMENT ME -  done? idk
-		if (!writtenToDisk) {
-		  spillPartitionToDisk()
-		}
-		outStream.close()
+	if (!writtenToDisk)
+	  spillPartitionToDisk()
+
+	outStream.close()
     inputClosed = true
   }
 
